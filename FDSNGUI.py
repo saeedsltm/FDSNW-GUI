@@ -16,10 +16,15 @@ import warnings
 warnings.filterwarnings("ignore")
 
 """
+
 A simple but powerfull GUI for using FDSNW services.
 
 LogChange:
 2021-05-09 > Initial    
+
+Author: Saeed SoltaniMoghadam
+Email1: saeed.soltanim@iiees.ac.ir
+Email2: saeed.sltm@gmail.com
 
 """
 
