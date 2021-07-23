@@ -20,7 +20,8 @@ warnings.filterwarnings("ignore")
 A simple but powerfull GUI for using FDSNW services.
 
 LogChange:
-2021-05-09 > Initial    
+2021-05-09 > Initial.
+2021-07-23 > Add some massages to statusbar.
 
 Author: Saeed SoltaniMoghadam
 Email1: saeed.soltanim@iiees.ac.ir
@@ -296,6 +297,7 @@ class MainApp(QMainWindow, ui):
             self.updateStatusBar("FDSNW service is not running!", 5000)
             return
         try:
+            self.updateStatusBar("Fetching station metadata ...", 5000)
             inventory = client.get_stations(
                 starttime=self.startTime,
                 endtime=self.endTime,
@@ -329,6 +331,7 @@ class MainApp(QMainWindow, ui):
             self.updateStatusBar("FDSNW service is not running!", 5000)
             return          
         try:
+            self.updateStatusBar("Fetching catalog data ...", 5000)
             catalog = client.get_events(
                 starttime=self.startTime,
                 endtime=self.endTime,
@@ -430,6 +433,7 @@ class MainApp(QMainWindow, ui):
         except:
             self.updateStatusBar("FDSNW service is not running!", 5000)
             return
+        self.updateStatusBar("Fetching waveforms data ...", 5000)
         reqComponents = [self.GB5_2_checkBox_1.isChecked(), self.GB5_2_checkBox_2.isChecked(), self.GB5_2_checkBox_3.isChecked()]
         namComponents = ["??E", "??N", "??Z"]
         components = ",".join([v for k,v in zip(reqComponents, namComponents) if k])

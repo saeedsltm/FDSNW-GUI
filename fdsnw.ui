@@ -107,6 +107,11 @@
          </item>
          <item>
           <property name="text">
+           <string>IRIS	http://service.iris.edu</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
            <string>ISC	http://isc-mirror.iris.washington.edu</string>
           </property>
          </item>
@@ -117,22 +122,22 @@
          </item>
          <item>
           <property name="text">
-           <string>USGS	http://earthquake.usgs.gov</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>IRIS	http://service.iris.edu</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
            <string>GFZ	http://geofon.gfz-potsdam.de</string>
           </property>
          </item>
          <item>
           <property name="text">
            <string>KOERI	http://eida.koeri.boun.edu.tr</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>NCEDC	http://service.ncedc.org</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>USGS	http://earthquake.usgs.gov</string>
           </property>
          </item>
         </widget>
