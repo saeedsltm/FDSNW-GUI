@@ -123,6 +123,7 @@ class MainApp(QMainWindow, ui):
         Update statusBar massage
         '''
         self.statusbar.showMessage(string, timeout)
+        self.statusbar.repaint()
 
     # Save file name 
     def saveFile(self, name):
@@ -160,7 +161,7 @@ class MainApp(QMainWindow, ui):
         Save folder dialog, select folder. 
         '''
         if name == "GB6_pushButton_3":
-            folderName = QFileDialog.getExistingDirectory(self, "Select dolder to save waveform")
+            folderName = QFileDialog.getExistingDirectory(self, "Select folder to save waveforms")
             self.GB6_lineEdit_3.setText(folderName)
     
     # Read catalog file
@@ -212,7 +213,7 @@ class MainApp(QMainWindow, ui):
             stationxml_storage="Continous/%s/stations/%s"%(folderName, sta))
         
     # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-    # XXXXXXXXXXXXXXXXXXXXXXXXX End of This Section XXXXXXXXXXXXXXXXXXXXXXXXXXX
+    # XXXXXXXXXXXXXXXXXXXXXX End of Utilities Section XXXXXXXXXXXXXXXXXXXXXXXXX
     # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
     # Parse "Date and Time of Request" parameters
