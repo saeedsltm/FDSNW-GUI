@@ -94,8 +94,9 @@ class MainApp(QMainWindow, ui):
         obj = item.placeholderText()
         if item.text():
             obj = item.text()
+        if obj == "": obj = None
         return obj
-
+        
     # Parse Connection Setting Parameters
     def parsConnectionSetting(self):
         '''
