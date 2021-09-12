@@ -3,9 +3,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from pathlib import Path
-from shutil import copy
-from glob import glob
-import os, sys, time
+import os, sys
 from obspy.clients.fdsn import Client
 from obspy import UTCDateTime as utc
 from obspy import read_events, read_inventory
@@ -22,6 +20,7 @@ A simple but powerfull GUI for using FDSNW services.
 LogChange:
 2021-05-09 > Initial.
 2021-07-23 > Add some massages to statusbar.
+2021-09-12 > parseText function now returns None if input string in empty.
 
 Author: Saeed SoltaniMoghadam
 Email1: saeed.soltanim@iiees.ac.ir
@@ -92,11 +91,10 @@ class MainApp(QMainWindow, ui):
         Parse "placeholderText" or "text" to string from lineEdit.
         '''
         obj = item.placeholderText()
-        if item.text():
-            obj = item.text()
+        if item.text(): obj = item.text()
         if obj == "": obj = None
         return obj
-        
+
     # Parse Connection Setting Parameters
     def parsConnectionSetting(self):
         '''
@@ -320,7 +318,7 @@ class MainApp(QMainWindow, ui):
             inventory.write(self.stationPath, format=ReqFormat)
             self.updateStatusBar("Station metadata saved in '%s' file."%(self.stationPath), 5000)
         except:
-            self.updateStatusBar("Operation failed! Please check your entries.", 5000)
+            self.updateStatusBar("Operation failed! Please check your entries. %s"%(sys.exc_info()[1]), 5000)
 
     # Download Catalog Information
     def getCatalog(self):
@@ -356,7 +354,7 @@ class MainApp(QMainWindow, ui):
             catalog.write(self.catalogPath, format=ReqFormat)
             self.updateStatusBar("%d event(s) saved in catalog '%s' file."%(len(catalog), self.catalogPath), 5000)
         except:
-            self.updateStatusBar("Operation failed! Please check your entries.", 5000)
+            self.updateStatusBar("Operation failed! Please check your entries. %s"%(sys.exc_info()[1]), 5000)
     
     # Download Waveform Information
     def getWaveform(self):
@@ -387,7 +385,7 @@ class MainApp(QMainWindow, ui):
             stream.write(self.waveformSaveName, format=ReqFormat)
             self.statusbar.showMessage("Waveforms saved in '%s' directory"%(self.waveformPath), 5000)
         except:
-            self.updateStatusBar("Operation failed! Please check your entries.", 5000)
+            self.updateStatusBar("Operation failed! Please check your entries. %s"%(sys.exc_info()[1]), 5000)
 
     # Download Catalog-based Waveform Information
     def getCatalogBasedWaveform(self):
@@ -423,7 +421,7 @@ class MainApp(QMainWindow, ui):
                 stream.write(self.waveformSaveName, format=ReqFormat)
                 self.statusbar.showMessage("Waveforms saved in '%s' directory."%(self.waveformPath), 5000)
             except:
-                self.updateStatusBar("Operation failed! Please check your entries.", 5000)
+                self.updateStatusBar("Operation failed! Please check your entries. %s"%(sys.exc_info()[1]), 5000)
     
     # Download Continous Waveform Information
     def getContinousWaveform(self):

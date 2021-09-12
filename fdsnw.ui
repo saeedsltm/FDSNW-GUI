@@ -768,14 +768,17 @@
            <bold>false</bold>
           </font>
          </property>
+         <property name="currentText">
+          <string>No</string>
+         </property>
          <item>
           <property name="text">
-           <string>Yes</string>
+           <string>No</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string>No</string>
+           <string>Yes</string>
           </property>
          </item>
         </widget>
@@ -801,14 +804,17 @@
            <bold>false</bold>
           </font>
          </property>
+         <property name="currentText">
+          <string>No</string>
+         </property>
          <item>
           <property name="text">
-           <string>Yes</string>
+           <string>No</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string>No</string>
+           <string>Yes</string>
           </property>
          </item>
         </widget>
@@ -834,14 +840,17 @@
            <bold>false</bold>
           </font>
          </property>
+         <property name="currentText">
+          <string>No</string>
+         </property>
          <item>
           <property name="text">
-           <string>Yes</string>
+           <string>No</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string>No</string>
+           <string>Yes</string>
           </property>
          </item>
         </widget>
