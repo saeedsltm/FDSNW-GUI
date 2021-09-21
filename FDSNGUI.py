@@ -3,12 +3,15 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from pathlib import Path
-import os, sys
 from obspy.clients.fdsn import Client
 from obspy import UTCDateTime as utc
 from obspy import read_events, read_inventory
 from obspy.core.event import Catalog
 from obspy.clients.fdsn.mass_downloader import GlobalDomain, Restrictions, MassDownloader
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
+from numpy import array, min, max
+import os, sys
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -147,6 +150,12 @@ class MainApp(QMainWindow, ui):
             if len(self.localCatalog):
                 fileName = fileName.split(os.sep)[-1]
                 self.GB5_1_pushButton_1.setText(fileName)
+        if name == "GB4_pushButton_1":
+            fileName, _ = QFileDialog.getOpenFileName(self,"Open polygon file", "","All Files (*)")
+            self.polygons, self.pxMin,self.pxMax, self.pyMin,self.pyMax  = self.readPolygon(fileName)
+            if len(self.polygons):
+                fileName = fileName.split(os.sep)[-1]
+                self.GB4_pushButton_1.setText(fileName)                   
         if name == "GB5_2_pushButton_1":
             fileName, _ = QFileDialog.getOpenFileName(self,"Open station file", "","All Files (*)")
             self.localStation = self.readStation(fileName)
@@ -210,6 +219,50 @@ class MainApp(QMainWindow, ui):
             restrictions,
             mseed_storage="Continous/%s/waveforms/%s"%(folderName, sta),
             stationxml_storage="Continous/%s/stations/%s"%(folderName, sta))
+    
+    # Read Polygon File In GMT Format
+    def readPolygon(self, fileName):
+        '''
+        Read GMT polygon file. You can generate it using "gmt coast" command.
+        example: "gmt coast -EIR -m > IR.dat" will generate polygon file for 
+        Iran and save it into "IR.dat"
+        '''        
+        polygons = []
+        try:
+            with open(fileName) as f:
+                for l in f:
+                    while l and ">" not in l:
+                        lonlat = (float(l.split()[0]), float(l.split()[1]))
+                        polygons[-1].append(lonlat)
+                        l = next(f, None)
+                    else:
+                        polygons.append([])
+            polygons.pop(-1)
+            xMin, yMin = min(array([min(array(i), axis=0) for i in polygons]), axis=0)
+            xMax, yMax = max(array([max(array(i), axis=0) for i in polygons]), axis=0)
+            message = "%d polygons found between Xmin=%7.3f; Xmax=%7.3f; Ymin=%7.3f; Ymax=%7.3f"%(len(polygons), xMin, xMax, yMin, yMax)
+            self.updateStatusBar(message, 5000)
+            return polygons, xMin, xMax, yMin, yMax
+        except:
+            message = "Corrupted file or bad format of polygon file!"
+            self.updateStatusBar(message, 5000)
+            return [], None, None, None, None
+        
+    
+    # Filter Input Catalog Based On Given Polygons
+    def applyPolygonCatalog(self, polygons, catalog):
+        '''
+        Given input catalog and polygons, it filters only events which lay inside
+        each polygon and returns final catalog. 
+        '''         
+        finCat = Catalog()
+        for polygon in polygons:
+            for evt in catalog:
+                point = Point(evt.preferred_origin().longitude, evt.preferred_origin().latitude)
+                polygon = Polygon(polygon)
+                if polygon.contains(point):
+                    finCat += evt
+        return finCat
         
     # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     # XXXXXXXXXXXXXXXXXXXXXX End of Utilities Section XXXXXXXXXXXXXXXXXXXXXXXXX
@@ -318,7 +371,8 @@ class MainApp(QMainWindow, ui):
             inventory.write(self.stationPath, format=ReqFormat)
             self.updateStatusBar("Station metadata saved in '%s' file."%(self.stationPath), 5000)
         except:
-            self.updateStatusBar("Operation failed! Please check your entries. %s"%(sys.exc_info()[1]), 5000)
+            errorMessage = str(sys.exc_info()[1]).split(".")[0]
+            self.updateStatusBar("Operation failed! Please check your entries. %s"%(errorMessage), 5000)
 
     # Download Catalog Information
     def getCatalog(self):
@@ -354,8 +408,47 @@ class MainApp(QMainWindow, ui):
             catalog.write(self.catalogPath, format=ReqFormat)
             self.updateStatusBar("%d event(s) saved in catalog '%s' file."%(len(catalog), self.catalogPath), 5000)
         except:
-            self.updateStatusBar("Operation failed! Please check your entries. %s"%(sys.exc_info()[1]), 5000)
-    
+            errorMessage = str(sys.exc_info()[1]).split(".")[0]
+            self.updateStatusBar("Operation failed! Please check your entries. %s"%(errorMessage), 5000)
+
+    # Download Polygon-Based Catalog
+    def getPolygonBasedCatalog(self):
+        '''
+        Download Polygon-Based Catalog Information using FDSNW service.
+        '''
+        try:
+            client = Client(self.URL)
+        except:
+            self.updateStatusBar("FDSNW service is not running!", 5000)
+            return          
+        try:
+            self.updateStatusBar("Fetching catalog data ...", 5000)
+            catalog = client.get_events(
+                starttime=self.startTime,
+                endtime=self.endTime,
+                minlatitude=self.pyMin,
+                maxlatitude=self.pyMax,
+                minlongitude=self.pxMin,
+                maxlongitude=self.pxMax,
+                mindepth=self.depMin,
+                maxdepth=self.depMax,
+                minmagnitude=self.magMin,
+                maxmagnitude=self.magMax,
+                includeallorigins=self.incOrg,
+                includeallmagnitudes=self.incMag,
+                includearrivals=self.incAri)
+            filteredCatalog = self.applyPolygonCatalog(self.polygons, catalog)
+            ReqFormat = self.GB6_comboBox_2.currentText()
+            if self.GB6_comboBox_2.currentText() == "Format":
+                ReqFormat = "QUAKEML"
+            extention = self.catalogPath.split(".")[-1]
+            self.catalogPath = self.catalogPath.replace(extention, self.catalogFormats[ReqFormat])
+            filteredCatalog.write(self.catalogPath, format=ReqFormat)
+            self.updateStatusBar("%d event(s) saved in catalog '%s' file."%(len(catalog), self.catalogPath), 5000)
+        except:
+            errorMessage = str(sys.exc_info()[1]).split(".")[0]
+            self.updateStatusBar("Operation failed! Please check your entries. %s"%(errorMessage), 5000)
+
     # Download Waveform Information
     def getWaveform(self):
         '''
@@ -385,8 +478,9 @@ class MainApp(QMainWindow, ui):
             stream.write(self.waveformSaveName, format=ReqFormat)
             self.statusbar.showMessage("Waveforms saved in '%s' directory"%(self.waveformPath), 5000)
         except:
-            self.updateStatusBar("Operation failed! Please check your entries. %s"%(sys.exc_info()[1]), 5000)
-
+            errorMessage = str(sys.exc_info()[1]).split(".")[0]
+            self.updateStatusBar("Operation failed! Please check your entries. %s"%(errorMessage), 5000)
+            
     # Download Catalog-based Waveform Information
     def getCatalogBasedWaveform(self):
         '''
@@ -421,8 +515,8 @@ class MainApp(QMainWindow, ui):
                 stream.write(self.waveformSaveName, format=ReqFormat)
                 self.statusbar.showMessage("Waveforms saved in '%s' directory."%(self.waveformPath), 5000)
             except:
-                self.updateStatusBar("Operation failed! Please check your entries. %s"%(sys.exc_info()[1]), 5000)
-    
+                errorMessage = str(sys.exc_info()[1]).split(".")[0]
+                self.updateStatusBar("Operation failed! Please check your entries. %s"%(errorMessage), 5000)    
     # Download Continous Waveform Information
     def getContinousWaveform(self):
         '''
@@ -457,7 +551,10 @@ class MainApp(QMainWindow, ui):
             self.getStation()
         if self.requestCatalog:
             self.parsCatalog()
-            self.getCatalog()
+            if self.GB4_pushButton_1.text() != "Load polygon file":
+                self.getPolygonBasedCatalog()
+            else:
+                self.getCatalog()
         if self.requestWaveform:
             self.parsWaveform()
             if self.GB5_1_pushButton_1.text() != "Load catalog file":
@@ -475,6 +572,7 @@ class MainApp(QMainWindow, ui):
         self.GB6_pushButton_3.clicked.connect(lambda: self.openFolder(self.GB6_pushButton_3.objectName()))
         self.GB5_1_pushButton_1.clicked.connect(lambda: self.openFile(self.GB5_1_pushButton_1.objectName()))
         self.GB5_2_pushButton_1.clicked.connect(lambda: self.openFile(self.GB5_2_pushButton_1.objectName()))
+        self.GB4_pushButton_1.clicked.connect(lambda: self.openFile(self.GB4_pushButton_1.objectName()))
 
 # Main App
 def main():
