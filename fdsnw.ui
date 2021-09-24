@@ -36,7 +36,7 @@
           </font>
          </property>
          <property name="text">
-          <string>Type URL:</string>
+          <string>FDSN URL:</string>
          </property>
         </widget>
        </item>
@@ -1176,7 +1176,7 @@
              </font>
             </property>
             <property name="text">
-             <string>Aftere OT (s):</string>
+             <string>After OT (s):</string>
             </property>
            </widget>
           </item>
