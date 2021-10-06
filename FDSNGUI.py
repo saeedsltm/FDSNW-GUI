@@ -275,6 +275,7 @@ class MainApp(QMainWindow, ui):
         while startDate <= endDate:
             dateList.append(startDate)
             startDate += delta
+            print(dateList)
         return sorted(set(dateList))
         
     # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -288,7 +289,7 @@ class MainApp(QMainWindow, ui):
         '''
         self.startTime = utc(self.GB2_dateTimeEdit_1.dateTime().toString("yyyy-MM-dd-hh:mm:ss"))
         self.endTime = utc(self.GB2_dateTimeEdit_2.dateTime().toString("yyyy-MM-dd-hh:mm:ss"))
-        self.dateList = [self.startTime, self.endTime]
+        self.dateList = [self.startTime.datetime, self.endTime.datetime]
 
     # Parse "Station Request" parameters
     def parsStation(self):
@@ -424,7 +425,7 @@ class MainApp(QMainWindow, ui):
         except:
             errorMessage = str(sys.exc_info()[1]).split(".")[0]
             if "Request would result in too much data" in errorMessage:
-                self.dateList = self.splitDate(self.startTime, self.endTime, self.dateList)
+                self.dateList = self.splitDate(self.startTime.datetime, self.endTime.datetime, self.dateList)
                 while len(self.dateList):
                     self.startTime = self.dateList[0]
                     self.endTime = self.dateList[1]
