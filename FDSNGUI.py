@@ -394,7 +394,6 @@ class MainApp(QMainWindow, ui):
         Download Catalog Information using FDSNW service.
         '''
         try:
-            print(self.URL)
             client = Client(self.URL)
         except:
             self.updateStatusBar("FDSNW service is not running!", 5000)
@@ -424,11 +423,12 @@ class MainApp(QMainWindow, ui):
             self.updateStatusBar("%d event(s) saved in catalog '%s' file."%(len(catalog), self.catalogPath), 5000)
         except:
             errorMessage = str(sys.exc_info()[1]).split(".")[0]
-            if errorMessage == "":
+            if "Request would result in too much data" in errorMessage:
                 self.dateList = self.splitDate(self.startTime, self.endTime, self.dateList)
                 while len(self.dateList):
                     self.startTime = self.dateList[0]
                     self.endTime = self.dateList[1]
+                    self.updateStatusBar("Large data request, spliting date from %s to %s"%(self.startTime, self.endTime), 5000)
                     self.getCatalog()
                     self.dateList.pop(0)
             self.updateStatusBar("Operation failed! Please check your entries. %s"%(errorMessage), 5000)
