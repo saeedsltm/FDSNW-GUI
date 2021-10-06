@@ -11,6 +11,7 @@ from obspy.clients.fdsn.mass_downloader import GlobalDomain, Restrictions, MassD
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 from numpy import array, min, max
+import datetime
 import os, sys
 
 import warnings
@@ -248,7 +249,6 @@ class MainApp(QMainWindow, ui):
             self.updateStatusBar(message, 5000)
             return [], None, None, None, None
         
-    
     # Filter Input Catalog Based On Given Polygons
     def applyPolygonCatalog(self, polygons, catalog):
         '''
@@ -263,6 +263,19 @@ class MainApp(QMainWindow, ui):
                 if polygon.contains(point):
                     finCat += evt
         return finCat
+    
+    # Split Date
+    def splitDate(self, startDate, endDate, dateList):
+        """
+        Given two dates, this function will split them
+        in two segments and appends to an existing list.
+        """
+        dt = endDate - startDate
+        delta = datetime.timedelta(days=dt.days/2)
+        while startDate <= endDate:
+            dateList.append(startDate)
+            startDate += delta
+        return sorted(set(dateList))
         
     # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     # XXXXXXXXXXXXXXXXXXXXXX End of Utilities Section XXXXXXXXXXXXXXXXXXXXXXXXX
@@ -274,7 +287,8 @@ class MainApp(QMainWindow, ui):
         Parse "Date and Time of Request" parameters.
         '''
         self.startTime = utc(self.GB2_dateTimeEdit_1.dateTime().toString("yyyy-MM-dd-hh:mm:ss"))
-        self.endTime = utc(self.GB2_dateTimeEdit_2.dateTime().toString("yyyy-MM-dd-hh:mm:ss"))        
+        self.endTime = utc(self.GB2_dateTimeEdit_2.dateTime().toString("yyyy-MM-dd-hh:mm:ss"))
+        self.dateList = [self.startTime, self.endTime]
 
     # Parse "Station Request" parameters
     def parsStation(self):
@@ -380,6 +394,7 @@ class MainApp(QMainWindow, ui):
         Download Catalog Information using FDSNW service.
         '''
         try:
+            print(self.URL)
             client = Client(self.URL)
         except:
             self.updateStatusBar("FDSNW service is not running!", 5000)
@@ -409,6 +424,13 @@ class MainApp(QMainWindow, ui):
             self.updateStatusBar("%d event(s) saved in catalog '%s' file."%(len(catalog), self.catalogPath), 5000)
         except:
             errorMessage = str(sys.exc_info()[1]).split(".")[0]
+            if errorMessage == "":
+                self.dateList = self.splitDate(self.startTime, self.endTime, self.dateList)
+                while len(self.dateList):
+                    self.startTime = self.dateList[0]
+                    self.endTime = self.dateList[1]
+                    self.getCatalog()
+                    self.dateList.pop(0)
             self.updateStatusBar("Operation failed! Please check your entries. %s"%(errorMessage), 5000)
 
     # Download Polygon-Based Catalog
