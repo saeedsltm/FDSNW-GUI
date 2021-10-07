@@ -275,7 +275,6 @@ class MainApp(QMainWindow, ui):
         while startDate <= endDate:
             dateList.append(startDate)
             startDate += delta
-            print(dateList)
         return sorted(set(dateList))
         
     # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -351,7 +350,7 @@ class MainApp(QMainWindow, ui):
         self.requestCatalog = self.GB6_checkBox_2.isChecked()
         self.requestWaveform = self.GB6_checkBox_3.isChecked()
         self.stationPath = self.parseText(self.GB6_lineEdit_1)
-        self.catalogPath = self.parseText(self.GB6_lineEdit_2)
+        self.catalogPathOrig = self.parseText(self.GB6_lineEdit_2)
         self.waveformPath = self.parseText(self.GB6_lineEdit_3)
     
     # Download Station Information
@@ -418,21 +417,28 @@ class MainApp(QMainWindow, ui):
             ReqFormat = self.GB6_comboBox_2.currentText()
             if self.GB6_comboBox_2.currentText() == "Format":
                 ReqFormat = "QUAKEML"
+            self.catalogPath = self.catalogPathOrig
             extention = self.catalogPath.split(".")[-1]
             self.catalogPath = self.catalogPath.replace(extention, self.catalogFormats[ReqFormat])
+            self.catalogPath = "".join([
+                self.catalogPath.split(".")[0],
+                "_%s-%s"%(self.startTime.strftime("%Y_%j"), self.endTime.strftime("%Y_%j")),
+                ".",
+                self.catalogPath.split(".")[1]])
             catalog.write(self.catalogPath, format=ReqFormat)
             self.updateStatusBar("%d event(s) saved in catalog '%s' file."%(len(catalog), self.catalogPath), 5000)
         except:
             errorMessage = str(sys.exc_info()[1]).split(".")[0]
             if "Request would result in too much data" in errorMessage:
                 self.dateList = self.splitDate(self.startTime.datetime, self.endTime.datetime, self.dateList)
-                while len(self.dateList):
+                while len(self.dateList) > 1:
                     self.startTime = self.dateList[0]
                     self.endTime = self.dateList[1]
                     self.updateStatusBar("Large data request, spliting date from %s to %s"%(self.startTime, self.endTime), 5000)
                     self.getCatalog()
                     self.dateList.pop(0)
-            self.updateStatusBar("Operation failed! Please check your entries. %s"%(errorMessage), 5000)
+            else:
+                self.updateStatusBar("Operation failed! Please check your entries. %s"%(errorMessage), 5000)
 
     # Download Polygon-Based Catalog
     def getPolygonBasedCatalog(self):
@@ -464,13 +470,28 @@ class MainApp(QMainWindow, ui):
             ReqFormat = self.GB6_comboBox_2.currentText()
             if self.GB6_comboBox_2.currentText() == "Format":
                 ReqFormat = "QUAKEML"
+            self.catalogPath = self.catalogPathOrig
             extention = self.catalogPath.split(".")[-1]
             self.catalogPath = self.catalogPath.replace(extention, self.catalogFormats[ReqFormat])
+            self.catalogPath = "".join([
+                self.catalogPath.split(".")[0],
+                "_%s-%s"%(self.startTime.strftime("%Y_%j"), self.endTime.strftime("%Y_%j")),
+                ".",
+                self.catalogPath.split(".")[1]])
             filteredCatalog.write(self.catalogPath, format=ReqFormat)
             self.updateStatusBar("%d event(s) saved in catalog '%s' file."%(len(catalog), self.catalogPath), 5000)
         except:
             errorMessage = str(sys.exc_info()[1]).split(".")[0]
-            self.updateStatusBar("Operation failed! Please check your entries. %s"%(errorMessage), 5000)
+            if "Request would result in too much data" in errorMessage:
+                self.dateList = self.splitDate(self.startTime.datetime, self.endTime.datetime, self.dateList)
+                while len(self.dateList) > 1:
+                    self.startTime = self.dateList[0]
+                    self.endTime = self.dateList[1]
+                    self.updateStatusBar("Large data request, spliting date from %s to %s"%(self.startTime, self.endTime), 5000)
+                    self.getCatalog()
+                    self.dateList.pop(0)
+            else:
+                self.updateStatusBar("Operation failed! Please check your entries. %s"%(errorMessage), 5000)
 
     # Download Waveform Information
     def getWaveform(self):
